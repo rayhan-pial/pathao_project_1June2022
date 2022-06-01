@@ -1,0 +1,302 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <title>Invoice Generate</title>
+    <style>
+        * {
+            font-family: Calibri, serif;
+        }
+
+        .box-style {
+            border: 1px solid black;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .order-info {
+            border-top: 3px solid #0a0a0a;
+            border-left: 1px solid black;
+            border-right: 1px solid black;
+            border-bottom: 1px solid black;
+        }
+
+        .order-info h4 {
+            font-weight: 700 !important;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        /* Start Table */
+        table {
+            border-collapse: collapse;
+            margin: 0;
+            padding: 100px 25px;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        table caption {
+            font-size: 1.5em;
+            margin: .5em 0 .75em;
+        }
+
+        table tr {
+            background-color: #f8f8f8;
+            padding: .35em;
+        }
+
+        table th,
+        table td {
+            padding: .625em;
+            text-align: center;
+        }
+
+        table th {
+            font-size: .85em;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        @media screen and (max-width: 600px) {
+            table {
+                border: 0;
+            }
+
+            table caption {
+                font-size: 1.3em;
+            }
+
+            table thead {
+                clip: rect(0 0 0 0);
+                height: 1px;
+                margin: -1px;
+                overflow: hidden;
+                padding: 0;
+                position: absolute;
+                width: 1px;
+            }
+
+            table tr {
+                border-bottom: 3px solid #ddd;
+                display: block;
+                margin-bottom: .625em;
+            }
+
+            table td {
+                display: block;
+                font-size: .8em;
+                text-align: right;
+            }
+
+            table td::before {
+                /*
+                * aria-label has no advantage, it won't be read inside a table
+                content: attr(aria-label);
+                */
+                content: attr(data-label);
+                float: left;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+
+            table td:last-child {
+                border-bottom: 0;
+            }
+        }
+
+        #id-table-receive tr th {
+            text-align: left !important;
+        }
+
+        #id-table-receive tr td {
+            text-align: left !important;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="invoice">
+    <div class="container company-info box-style mt-2"
+         style="border: 1px solid #000000; border-radius: 5px; text-align: center;">
+        <div class="row">
+            <h1>Pathao Limited</h1>
+        </div>
+        <div class="row">
+            <h4>CWN(A) 3A, Road # 49, Kemal Ataturk Avenue</h4>
+        </div>
+        <div class="row">
+            <h4>Gulshan Model Town, DHaka-1212</h4>
+        </div>
+    </div>
+    <div class="container order-info box-style ">
+        <div class="row">
+            <h4>Order Date: {{ order.created }}</h4>
+        </div>
+        <div class="row">
+            <h4>Office Name: {{ order.user.profile_user.shop_address }}</h4>
+        </div>
+        <div class="row">
+            <h4>Requester Name: {{ order.user.profile_user.full_name }}</h4>
+        </div>
+        <div class="row">
+            <h4>Contact: {{ order.user.profile_user.phone_number }}</h4>
+        </div>
+    </div>
+    <div class="container box-style ">
+        <table>
+            <thead>
+            <tr>
+                <th scope="col">S.no</th>
+                <th scope="col">Product</th>
+                <th scope="col">Rate</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Total</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for num, item in total_and_order %}
+                <tr>
+                    <td data-label="S.no">
+                        {{ num }}
+                    </td>
+                    <td data-label="Product">
+                        {{ item.item.product_name }}
+                    </td>
+                    <td data-label="Rate">
+                        {{ item.item.price_per_unit }}
+                    </td>
+                    <td data-label="Quantity">
+                        {{ item.quantity }}
+                    </td>
+                    <td data-label="Total">
+                        {{ item.get_total }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="container ">
+            <p style="padding: 1px 0;">Order Amount: &nbsp; {{ order.get_order_total }}</p>
+            <p style="padding: 1px 0;">Delivery Status: &nbsp; Pending</p>
+            <p style="padding: 1px 0;">Confirmed By: &nbsp; {{ user }}</p>
+        </div>
+    </div>
+    <div class="container box-style">
+        <table id="id-table-receive">
+            <thead>
+            <tr>
+                <th scope="col">Dispatched By</th>
+                <th scope="col">Received for Transportation By</th>
+                <th scope="col">Received By</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td data-label="Dispatched By">
+                        Name:
+                    </td>
+                    <td data-label="Received for Transportation By">
+                        Name:
+                    </td>
+                    <td data-label="Received By">
+                        Name:
+                    </td>
+                </tr>
+                <tr>
+                    <td data-label="Dispatched By">
+                        Contact:
+                    </td>
+                    <td data-label="Received for Transportation By">
+                        Contact:
+                    </td>
+                    <td data-label="Received By">
+                        Contact:
+                    </td>
+                </tr>
+                <tr>
+                    <td data-label="Dispatched By">
+                        Date:
+                    </td>
+                    <td data-label="Received for Transportation By">
+                        Date:
+                    </td>
+                    <td data-label="Received By">
+                        Date:
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- Print Invoice Operation -->
+<div id="editor"></div>
+{#<div class="text-center mt-5">#}
+{#    <p>#}
+{#        <button class="btn btn-download" style="background-color: #34d7aa; color: black; font-weight: 500;"#}
+{#                id="generatePDF"#}
+{#                onclick="downloadInvoice()">#}
+{#            Download PDF#}
+{#        </button>#}
+{#    </p>#}
+{#</div>#}
+
+<!-- HTML to pdf needed JS -->
+<script src="{% static 'js/jspdf.debug.js' %}"></script>
+<script src="{% static 'js/html2canvas.min.js' %}"></script>
+<script src="{% static 'js/html2pdf.min.js' %}"></script>
+
+
+<script>
+    const dt = new Date();
+    let invoice_date = document.getElementById('invoice-date');
+
+    const options = {
+        margin: 0.2,
+        filename: 'invoice.pdf',
+        image: {
+            type: 'jpeg',
+            quality: 500
+        },
+        html2canvas: {
+            scale: 1
+        },
+        jsPDF: {
+            unit: 'in',
+            format: 'letter',
+            orientation: 'portrait'
+        }
+    }
+
+    function downloadInvoice() {
+        const element = document.getElementById('invoice');
+        html2pdf().from(element).save();
+    }
+
+
+    function printDiv(divName) {
+        var printContents = document.getElementById(divName).innerHTML;
+        var originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+
+        window.print();
+
+        document.body.innerHTML = originalContents;
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+</body>
+</html>

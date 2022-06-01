@@ -1,0 +1,166 @@
+{% extends 'App_main/Admin_base.html' %}
+{% load crispy_forms_filters %}
+{% load static %}
+{% block main %}
+    <style>
+        .main-content {
+            width: 50%;
+            border-radius: 20px;
+            box-shadow: 0 5px 5px rgba(0, 0, 0, .4);
+            margin: 5em auto;
+            display: flex;
+        }
+
+        .company__info {
+            background-color: #008080;
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: #fff;
+        }
+
+        @media screen and (max-width: 640px) {
+            .main-content {
+                width: 90%;
+            }
+
+            .company__info {
+                display: none;
+            }
+        }
+
+        @media screen and (min-width: 642px) and (max-width: 800px) {
+            .main-content {
+                width: 70%;
+            }
+        }
+
+        .row > h2 {
+            color: #008080;
+        }
+
+        .login_form {
+            background-color: #fff;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+            border-top: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+        }
+
+        form {
+            padding: 0 2em;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            border: 0px solid transparent;
+            border-radius: 0;
+            border-bottom: 1px solid #aaa;
+            padding: 1em .5em .5em;
+            padding-left: 2em;
+            outline: none;
+            margin: 1.5em auto;
+            transition: all .5s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-bottom-color: #008080;
+            box-shadow: 0 0 5px rgba(0, 80, 80, .4);
+            border-radius: 4px;
+        }
+
+        .btn {
+            transition: all .5s ease;
+            width: 70%;
+            border-radius: 30px;
+            color: #008080;
+            font-weight: 600;
+            background-color: #fff;
+            border: 1px solid #008080;
+            margin-top: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        .btn:hover, .btn:focus {
+            background-color: #008080;
+            color: #fff;
+        }
+
+        #id_category_name {
+            width: 80%;
+        }
+    </style>
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row main-content bg-success pt-2">
+            <h4 class="company_title text-center">
+                <img src="{% static 'images/Pathao_Logo-.svg' %}" alt="Pathao Logo">
+            </h4>
+            <div class="col-md-12 col-xs-12 col-sm-12 login_form">
+                <div class="container-fluid">
+                    <div class="row">
+                        <h2 class="m-3">ADD NEW PRODUCT</h2>
+                    </div>
+                    <div class="row">
+                        <form method="post" class="form-group" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <fieldset>
+                                <label for="id_product_name">Product Name</label>
+                                {{ form.product_name }}
+                                <label for="id_category_name">Category Name</label> <br>
+                                {{ form.category_name }}
+                                <a href="#id-add-category" data-bs-toggle="modal" data-bs-target="#id-add-category"
+                                   onclick="document.getElementById('id-add-category').style.display='block';">Add
+                                    Category</a>
+                                <label for="id_No_of_available">No of Availability</label>
+                                {{ form.No_of_available }}
+                                <label for="id_price_per_unit">Price per unit</label>
+                                {{ form.price_per_unit }}
+                                <label for="id_product_details">Product Details</label>
+                                {{ form.product_details }}
+                                <label for="id_image">Product Image</label>
+                                {{ form.image }}
+                            </fieldset>
+                            <div class="row">
+                                <input type="submit" value="Submit" class="btn">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="id-add-category" style="display: none;" tabindex="-1"
+         aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Add new category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'App_main:add-new-category' %}" method="post" class="justify-content-center">
+                        {% csrf_token %}
+                        <input type="text" name="cat-name"
+                               style="width: 100%; background-color: rgb(208,208,208); color: #000000;">
+                        <button class="btn btn-success w-100" type="submit">
+                            Add
+                        </button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-25 float-right" data-bs-dismiss="modal">Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+            crossorigin="anonymous"></script>
+{% endblock %}

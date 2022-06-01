@@ -1,0 +1,534 @@
+{% extends 'App_main/Admin_base.html' %}
+{% load static %}
+{% load crispy_forms_filters %}
+{% block main %}
+    <style>
+        /* Start Table */
+        table {
+            border: 1px solid #ccc;
+            border-collapse: collapse;
+            margin: 0;
+            padding: 100px 25px;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        table caption {
+            font-size: 1.5em;
+            margin: .5em 0 .75em;
+        }
+
+        table tr {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: .35em;
+        }
+
+        table th,
+        table td {
+            padding: .625em;
+            text-align: center;
+        }
+
+        table th {
+            font-size: .85em;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        @media screen and (max-width: 600px) {
+            table {
+                border: 0;
+            }
+
+            table caption {
+                font-size: 1.3em;
+            }
+
+            table thead {
+                border: none;
+                clip: rect(0 0 0 0);
+                height: 1px;
+                margin: -1px;
+                overflow: hidden;
+                padding: 0;
+                position: absolute;
+                width: 1px;
+            }
+
+            table tr {
+                border-bottom: 3px solid #ddd;
+                display: block;
+                margin-bottom: .625em;
+            }
+
+            table td {
+                border-bottom: 1px solid #ddd;
+                display: block;
+                font-size: .8em;
+                text-align: right;
+            }
+
+            table td::before {
+                /*
+                * aria-label has no advantage, it won't be read inside a table
+                content: attr(aria-label);
+                */
+                content: attr(data-label);
+                float: left;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+
+            table td:last-child {
+                border-bottom: 0;
+            }
+        }
+
+        .product-image-cls {
+            width: 100%;
+            height: auto;
+        }
+
+        input {
+            width: 100%;
+            border: 0px solid transparent;
+            border-radius: 0;
+            border-bottom: 1px solid #aaa;
+            padding: 1em .5em .5em;
+            padding-left: 2em;
+            outline: none;
+            margin: 1.5em auto;
+            transition: all .5s ease;
+        }
+
+        input:focus {
+            border-bottom-color: #008080;
+            box-shadow: 0 0 5px rgba(0, 80, 80, .4);
+            border-radius: 4px;
+        }
+
+        .controls p, ul {
+            display: none;
+        }
+
+        .card-title {
+            cursor: pointer;
+        }
+
+        .invoice-btn {
+            background-color: rgba(60, 34, 145, 0.81);
+            color: white;
+        }
+
+        .invoice-btn:hover {
+            background-color: #3c2291;
+            color: white;
+        }
+
+        .card-body {
+            height: 120px !important;
+        }
+
+        .card-title {
+            font-size: 15px;
+        }
+    </style>
+    {% if messages %}
+        {% for message in messages %}
+            <p class="alert-info">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Modal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form action="{% url 'App_main:register-with-admin' %}" method="post">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        {{ signupForm|crispy }}
+                        {{ customerAddressForm|crispy }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close
+                        </button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="container mb-3">
+        <a class="btn btn-success w-100" href="{% url 'App_main:add-new-product' %}">Add new product</a>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 p-3">
+                <div class="card" onclick="customer_show()">
+                    <div class="card-body">
+                        <h2 class="card-title">No. of Customer</h2>
+                        <div style="float: right; margin-bottom: 0;">
+                            <h3 class="card-subtitle m-2 text-muted float-right">{{ total_customer }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-3">
+                <div class="card" onclick="product_show()">
+                    <div class="card-body">
+                        <h2 class="card-title">No. of Product</h2>
+                        <div style="float: right; margin-bottom: 0;">
+                            <h3 class="card-subtitle m-2 text-muted float-right">{{ total_product.count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-3">
+                <div class="card" onclick="order_show()">
+                    <div class="card-body">
+                        <h2 class="card-title">No. of Orders</h2>
+                        <div style="float: right; margin-bottom: 0;">
+                            <h3 class="card-subtitle m-2 text-muted float-right">{{ total_orders.count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 p-3">
+                <div class="card" id="shortage_card" onclick="shortage_show()">
+                    <div class="card-body">
+                        <h2 class="card-title">No. of Shortages</h2>
+                        <div style="float: right; margin-bottom: 0;">
+                            <h3 class="card-subtitle m-2 text-muted float-right">{{ total_shortage.count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div id="product_table">
+            <table id="id-all-product-table">
+                <caption>
+                    <button class="btn btn-primary" id="id-download-product-table" onclick="productTableDownload()">
+                        Download as Excel
+                    </button>
+                </caption>
+                <thead>
+                <tr>
+                    <th scope="col">Image</th>
+                    <th scope="col">Product Name</th>
+                    <th scope="col">Available Quantity</th>
+                    <th scope="col">Price per Unit</th>
+                    <th scope="col">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for product in total_product %}
+                    <form action="{% url 'App_main:update-product' %}" method="post" id="form-{{ product.id }}">
+                        {% csrf_token %}
+                        <input type="number" name="product_id" value="{{ product.id }}" style="display: none;">
+                        <tr>
+                            <td data-label="Images">
+                                <img class="product-image-cls" src="{{ product.image.url }}" alt="Image">
+                                <p style="display:none;">
+                                    http://{{ request.META.HTTP_HOST }}/media/{{ product.image }}
+                                </p>
+                            </td>
+                            <td data-label="Product Name">{{ product.product_name }}</td>
+                            <td data-label="Quantity">
+                                <input type="number" id="id-input-available-{{ product.id }}"
+                                       name="quantity"
+                                       style="display: none">
+                                <span id="id-available-{{ product.id }}">
+                                {{ product.No_of_available }}
+                            </span>
+                            </td>
+                            <td data-label="Price">
+                                <input type="number" id="id-input-price-{{ product.id }}" name="price"
+                                       style="display: none">
+                                <span id="id-price-{{ product.id }}">
+                                {{ product.price_per_unit }}
+                            </span>
+                            </td>
+                            <td data-label="Action">
+                                <div id="id-edit-{{ product.id }}" class="m-1">
+                                    <button class="btn btn-warning" type="button" onclick="openEdit_{{ product.id }}()">
+                                        Edit
+                                    </button>
+                                </div>
+                                <div id="id-delete-{{ product.id }}" class="m-1">
+                                    <button class="btn btn-danger" type="button"
+                                            onclick="window.location.href='{% url "App_main:delete-product" product_key=product.id %}'">
+                                        Delete
+                                    </button>
+                                </div>
+                                <div id="id-submit-{{ product.id }}" style="display: none;">
+                                    <button class="btn btn-danger" type="submit">Update</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <script>
+                            let available_input_{{ product.id }} = document.getElementById('id-input-available-{{ product.id }}');
+                            let price_input_{{ product.id }} = document.getElementById('id-input-price-{{ product.id }}');
+                            let editButton_{{ product.id }} = document.getElementById('id-edit-{{ product.id }}');
+                            let deleteButton_{{ product.id }} = document.getElementById('id-delete-{{ product.id }}');
+                            let submitButton_{{ product.id }} = document.getElementById('id-submit-{{ product.id }}');
+
+                            function openEdit_{{ product.id }}() {
+                                available_input_{{ product.id }}.style.display = 'block';
+                                price_input_{{ product.id }}.style.display = 'block';
+                                editButton_{{ product.id }}.style.display = 'none';
+                                deleteButton_{{ product.id }}.style.display = 'none';
+                                submitButton_{{ product.id }}.style.display = 'block';
+                            }
+                        </script>
+                    </form>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="product_shortage_table" style="display: none">
+            <table id="id-all-shortage-table">
+                <caption>
+                    <button class="btn btn-primary" id="id-download-shortage-table" onclick="shortageTableDownload()">
+                        Download as Excel
+                    </button>
+                </caption>
+                <thead>
+                <tr>
+                    <th scope="col">Image</th>
+                    <th scope="col">Product Name</th>
+                    <th scope="col">Price per Unit</th>
+                    <th scope="col">Shortage Amount</th>
+                    <th scope="col">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for product in total_shortage %}
+                    <tr>
+                        <td data-label="Images">
+                            <img class="product-image-cls" src="{{ product.product.image.url }}" alt="Image">
+                            <p style="display:none;">
+                                http://{{ request.META.HTTP_HOST }}/media/{{ product.product.image }}
+                            </p>
+                        </td>
+                        <td data-label="Product Name">{{ product.product.product_name }}</td>
+                        <td data-label="Price">
+                            {{ product.product.price_per_unit }}
+                        </td>
+                        <td data-label="Shortage Amount">
+                            {{ product.storageAmount }}
+                        </td>
+                        <td data-label="Action">
+                            <div id="id-delete-{{ product.product.id }}" class="m-1">
+                                <button class="btn btn-danger" type="button"
+                                        onclick="window.location.href='{% url "App_main:delete-shortage-record" table_key=product.id %}'">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="order_table" style="display: none">
+            <table id="id-all-order-table">
+                <caption>
+                    <button class="btn btn-primary" id="id-download-order-table" onclick="orderTableDownload()">
+                        Download as Excel
+                    </button>
+                </caption>
+                <thead>
+                <tr>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Buyer</th>
+                    <th scope="col">Order Items</th>
+                    <th scope="col">Asking Quantity</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in total_orders %}
+                    <tr>
+                        <td data-label="Order ID">
+                            {{ order.order_id }}
+                        </td>
+                        <td data-label="Buyer">{{ order.user.get_full_name }}</td>
+                        <td data-label="Order Items">
+                            {% for item in order.order_items.all %}
+                                <b>{{ item.item.product_name }}</b>, <br>
+                            {% endfor %}
+                        </td>
+                        <form action="{% url 'App_main:update-order-item-quantity' %}" method="post">
+                            {% csrf_token %}
+                            <input type="number" name="orderID" value="{{ order.id }}" style="display: none;">
+                            <td data-label="Asking Quantity">
+                                {% for order_name in order.order_items.all %}
+                                    <input type="number" name="quantity" value="{{ order_name.quantity }}">
+                                    {#                                    <b>{{ order_name.quantity }}, </b>#}
+                                {% endfor %}
+                                <button class="btn btn-warning" type="submit">Update Quantity</button>
+                            </td>
+                        </form>
+                        <td data-label="Price">
+                            {{ order.get_order_total }}
+                        </td>
+                        <form action="{% url 'App_main:update-order-status' %}" method="post">
+                            {% csrf_token %}
+                            <td data-label="Status">
+                                {{ order.status }}
+                            </td>
+                            <td data-label="Action">
+                                <input type="number" name="order_id" style="display: none;" value="{{ order.id }}">
+                                <select style="width: 100%" name="status_change" id="id-status-change">
+                                    <option value="Processing">Processing</option>
+                                    {#                                    <option value="Confirm">Confirm</option>#}
+                                    <option value="Rejected">Rejected</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Final approval from boss">Final approval from boss</option>
+                                </select>
+                                <div id="" class="m-1">
+                                    <button class="btn btn-success m-1" type="submit">
+                                        Update
+                                    </button>
+                                    {% if order.status is "Confirmed" %}
+                                        <button class="btn invoice-btn m-1" type="button"
+                                                onclick="window.location.href='{% url "App_main:invoice-generator" OrderID=order.id %}'">
+                                            Invoice
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </form>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="customer_table" style="display: none">
+            <table id="id-all-customer-table">
+                <caption>
+                    <button class="btn btn-primary" id="id-download-customer-table" onclick="customerTableDownload()">
+                        Download as Excel
+                    </button>
+                </caption>
+                <thead>
+                <tr>
+                    <th scope="col">Email</th>
+                    <th scope="col">Profile Picture</th>
+                    <th scope="col">Customer Name</th>
+                    <th scope="col">Phone Number</th>
+                    <th scope="col">Shop Address</th>
+                    <th scope="col">City</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for customer in all_customers %}
+                    <tr>
+                        <td data-label="Email">
+                            {{ customer.email }}
+                        </td>
+                        {% if customer.profile_user.shop_address %}
+                            <td data-label="Profile Picture">
+                                <img class="product-image-cls" src="{{ customer.profile_user.profile_picture.url }}"
+                                     alt="Image">
+                                <p style="display:none;">
+                                    http://{{ request.META.HTTP_HOST }}/media/{{ customer.profile_user.profile_picture }}
+                                </p>
+                            </td>
+                            </td>
+                            <td data-label="Customer Name">{{ customer.profile_user.full_name }}</td>
+                            <td data-label="Phone Number">
+                                {{ customer.profile_user.phone_number }}
+                            </td>
+                            <td data-label="Shop Address">
+                                {{ customer.profile_user.shop_address }}
+                            </td>
+                            <td data-label="City">
+                                {{ customer.profile_user.city }} - {{ customer.profile_user.zipcode }}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="{% static 'js/table2excel.js' %}"></script>
+
+    <script>
+        let product_t = document.getElementById('product_table');
+        let product_s = document.getElementById('product_shortage_table');
+        let order_t = document.getElementById('order_table');
+        let customer_t = document.getElementById('customer_table');
+
+        let product_excel_button = document.getElementById('id-download-product-table');
+        let order_excel_button = document.getElementById('id-download-order-table');
+        let customer_excel_button = document.getElementById('id-download-customer-table');
+        let shortage_excel_button = document.getElementById('id-download-shortage-table');
+
+        function productTableDownload() {
+            var table2excel = new Table2Excel();
+            table2excel.export(document.querySelectorAll("#id-all-product-table"));
+        }
+
+        function orderTableDownload() {
+            var table2excel = new Table2Excel();
+            table2excel.export(document.querySelectorAll("#id-all-order-table"));
+        }
+
+        function customerTableDownload() {
+            var table2excel = new Table2Excel();
+            table2excel.export(document.querySelectorAll("#id-all-customer-table"));
+        }
+
+        function shortageTableDownload() {
+            var table2excel = new Table2Excel();
+            table2excel.export(document.querySelectorAll("#id-all-shortage-table"));
+        }
+
+        function shortage_show() {
+            product_t.style.display = 'none';
+            product_s.style.display = 'block';
+            order_t.style.display = 'none';
+            customer_t.style.display = 'none';
+        }
+
+        function product_show() {
+            product_t.style.display = 'block';
+            product_s.style.display = 'none';
+            order_t.style.display = 'none';
+            customer_t.style.display = 'none';
+        }
+
+        function order_show() {
+            order_t.style.display = 'block';
+            product_t.style.display = 'none';
+            product_s.style.display = 'none';
+            customer_t.style.display = 'none';
+        }
+
+        function customer_show() {
+            customer_t.style.display = 'block';
+            product_t.style.display = 'none';
+            product_s.style.display = 'none';
+            order_t.style.display = 'none';
+        }
+
+    </script>
+
+    <script>
+        let scroll = $(window).scrollTop();
+    </script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'App_main/customer_dashboard.html' %}
+{% load crispy_forms_filters %}
+{% block main %}
+    <style>
+        input, textarea {
+            width: 100%;
+            border: 0px solid transparent;
+            border-radius: 0;
+            border-bottom: 1px solid #aaa;
+            padding: 1em .5em .5em 2em;
+            outline: none;
+            margin: 1.5em auto;
+            transition: all .5s ease;
+            background-color: rgba(72, 69, 69, 0.15);
+        }
+
+        input:focus, textarea:focus {
+            background-color: white;
+            border-bottom-color: #008080;
+            box-shadow: 0 0 5px rgba(0, 80, 80, .4);
+            border-radius: 4px;
+        }
+
+        #id_House {
+            height: 70px;
+        }
+    </style>
+    <div class="container mb-5 p-2">
+        <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-6">
+                <form method="post" class="form-group" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <fieldset class="form-group">
+                        {{ form.profile_picture }}
+                    </fieldset>
+                    <div class="form-group">
+                        <button class="btn btn-primary">submit</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-3"></div>
+        </div>
+    </div>
+{% endblock %}
